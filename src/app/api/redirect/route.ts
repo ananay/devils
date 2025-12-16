@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Open redirect vulnerability - redirects to arbitrary URLs
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const url = searchParams.get('url') || searchParams.get('next') || searchParams.get('return')
@@ -12,7 +11,7 @@ export async function GET(request: NextRequest) {
   // Header injection via redirect - no URL validation
   const response = NextResponse.redirect(url)
   
-  // Add any custom headers from query params (header injection vulnerability)
+  // Add any custom headers from query params
   const customHeader = searchParams.get('header')
   if (customHeader) {
     const [name, value] = customHeader.split(':')
@@ -23,6 +22,7 @@ export async function GET(request: NextRequest) {
 
   return response
 }
+
 
 
 

@@ -3,7 +3,6 @@ import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { fetchUrl } from '@/lib/server-utils'
 
-// SSRF vulnerability - fetches arbitrary URLs
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -25,7 +24,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch the image from the URL (SSRF vulnerability)
     const { data, status } = await fetchUrl(url)
 
     if (status !== 200) {
@@ -36,7 +34,6 @@ export async function POST(request: NextRequest) {
     }
 
     // For demo purposes, we'll just store the URL directly
-    // In a real vulnerable app, we'd save the fetched content
     await prisma.user.update({
       where: { id: user.userId },
       data: { avatarUrl: url },

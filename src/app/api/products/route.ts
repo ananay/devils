@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma, rawQuery } from '@/lib/db'
 
-// GET products with search - SQL injection vulnerability
+// GET products with search
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
     const order = searchParams.get('order') || 'asc'
 
     if (search) {
-      // Vulnerable raw query for search
       const products = await rawQuery<{
         id: number
         name: string
@@ -74,6 +73,7 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
 
 
 

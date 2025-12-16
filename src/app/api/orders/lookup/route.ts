@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rawQuery } from '@/lib/db'
 
-// GET order by tracking code - SQL injection vulnerability
+// GET order by tracking code
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -14,7 +14,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Vulnerable raw query
     const orders = await rawQuery<{
       id: number
       tracking_code: string
@@ -45,6 +44,7 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
 
 
 

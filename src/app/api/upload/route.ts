@@ -25,13 +25,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get file extension from original filename (no validation - file upload vulnerability)
+    // Get file extension from original filename
     const originalName = file.name
     const extension = originalName.split('.').pop() || ''
     
     // Generate filename using timestamp and original extension
     const timestamp = Date.now()
-    // Path traversal vulnerability - filename not sanitized
     const filename = `${type}_${timestamp}_${originalName}`
     
     // Convert file to buffer
@@ -61,6 +60,7 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
 
 
 

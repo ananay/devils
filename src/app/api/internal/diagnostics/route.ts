@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { executeCommand } from '@/lib/server-utils'
 
-// Command injection vulnerability - executes user-provided commands
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create review - content is stored without sanitization (XSS vulnerability)
+// POST create review
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         userId: user.userId,
         productId: parseInt(productId),
         rating: parseInt(rating),
-        content: content, // No sanitization - XSS vulnerability
+        content: content,
       },
       include: {
         user: {
@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
 
 
 

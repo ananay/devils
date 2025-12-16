@@ -5,7 +5,7 @@ interface RouteParams {
   params: Promise<{ id: string }>
 }
 
-// GET user by ID - no auth check (IDOR vulnerability)
+// GET user by ID
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
@@ -44,14 +44,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// PUT update user - no ownership check (IDOR vulnerability)
+// PUT update user
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const userId = parseInt(id)
     const body = await request.json()
 
-    // Allow updating any field from body (mass assignment vulnerability)
     const user = await prisma.user.update({
       where: { id: userId },
       data: body,
@@ -94,6 +93,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     )
   }
 }
+
 
 
 

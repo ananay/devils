@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// SSRF vulnerability - makes requests to arbitrary URLs
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -23,7 +22,6 @@ export async function POST(request: NextRequest) {
       },
     }
 
-    // SSRF vulnerability - no URL validation
     const response = await fetch(url, {
       method: 'POST',
       headers: {

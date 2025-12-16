@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
           discount = Number(coupon.discount)
         }
 
-        // Increment usage count (race condition vulnerability)
+        // Increment usage count
         await prisma.coupon.update({
           where: { code: couponCode },
           data: { usedCount: { increment: 1 } },
@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
 
 
 

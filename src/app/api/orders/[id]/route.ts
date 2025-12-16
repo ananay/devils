@@ -6,7 +6,7 @@ interface RouteParams {
   params: Promise<{ id: string }>
 }
 
-// GET single order - no ownership check (IDOR vulnerability)
+// GET single order
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
@@ -95,6 +95,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     )
   }
 }
+
 
 
 

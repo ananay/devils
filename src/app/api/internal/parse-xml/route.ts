@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseXml } from '@/lib/server-utils'
 
-// XXE vulnerability - parses XML without disabling external entities
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -14,7 +13,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // XXE vulnerability - uses xml2js with default settings
     const result = await parseXml(xml)
 
     return NextResponse.json({ result })
