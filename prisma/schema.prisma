@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  password     String
+  name         String
+  bio          String?
+  avatarUrl    String?
+  role         String    @default("customer")
+  resetToken   String?
+  preferences  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  orders       Order[]
+  reviews      Review[]
+  addresses    Address[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String
+  price       Decimal   @db.Decimal(10, 2)
+  imageUrl    String?
+  stock       Int       @default(100)
+  featured    Boolean   @default(false)
+  abv         Decimal?  @db.Decimal(4, 1)
+  origin      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  categoryId  Int
+  category    Category  @relation(fields: [categoryId], references: [id])
+  
+  orderItems  OrderItem[]
+  reviews     Review[]
+
+  @@map("products")
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  userId        Int
+  total         Decimal     @db.Decimal(10, 2)
+  status        String      @default("pending")
+  trackingCode  String?
+  shippingName  String?
+  shippingAddress String?
+  notes         String?
+  couponCode    String?
+  discount      Decimal?    @db.Decimal(10, 2)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  user          User        @relation(fields: [userId], references: [id])
+  items         OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  rating    Int
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@map("reviews")
+}
+
+model Address {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  label       String
+  street      String
+  city        String
+  state       String
+  zipCode     String
+  country     String   @default("USA")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("addresses")
+}
+
+model Coupon {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  discount    Decimal   @db.Decimal(5, 2)
+  type        String    @default("percentage")
+  maxUses     Int       @default(1)
+  usedCount   Int       @default(0)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("coupons")
+}
+
+model Webhook {
+  id          Int      @id @default(autoincrement())
+  url         String
+  event       String
+  active      Boolean  @default(true)
+  secret      String?
+  createdAt   DateTime @default(now())
+
+  @@map("webhooks")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  entity    String
+  entityId  Int?
+  userId    Int?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+
+
+

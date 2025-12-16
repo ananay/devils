@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: devils-advocate-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: devils
+      POSTGRES_PASSWORD: advocate123
+      POSTGRES_DB: devilsadvocate
+    ports:
+      - "5444:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devils -d devilsadvocate"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devils-advocate-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://devils:advocate123@db:5432/devilsadvocate?schema=public"
+      JWT_SECRET: "devil666"
+      SESSION_SECRET: "sessiondevil"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./public/uploads:/app/public/uploads
+
+volumes:
+  postgres_data:
+
