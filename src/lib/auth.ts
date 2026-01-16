@@ -3,8 +3,18 @@ import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import { prisma } from './db'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'devil666'
-const SESSION_SECRET = process.env.SESSION_SECRET || 'sessiondevil'
+// Remove hardcoded fallbacks - fail if secrets are not configured
+const JWT_SECRET = process.env.JWT_SECRET
+const SESSION_SECRET = process.env.SESSION_SECRET
+
+if (!JWT_SECRET || !SESSION_SECRET) {
+  throw new Error('JWT_SECRET and SESSION_SECRET environment variables must be set')
+}
+
+// Ensure secrets are strong (minimum 32 characters)
+if (JWT_SECRET.length < 32 || SESSION_SECRET.length < 32) {
+  throw new Error('Secrets must be at least 32 characters long')
+}
 
 export interface TokenPayload {
   userId: number
