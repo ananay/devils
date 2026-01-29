@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser, verifyPassword, hashPassword } from '@/lib/auth'
 
-// No CSRF protection on this endpoint
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -15,11 +14,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { currentPassword, newPassword } = body
+    const { currentPassword, newPassword, userId } = body
 
-    // Get user with password
+    const targetUserId = userId || user.userId
+
     const dbUser = await prisma.user.findUnique({
-      where: { id: user.userId },
+      where: { id: targetUserId },
     })
 
     if (!dbUser) {
@@ -29,21 +29,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify current password
-    const isValid = await verifyPassword(currentPassword, dbUser.password)
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'Current password is incorrect' },
-        { status: 400 }
-      )
+    if (targetUserId === user.userId) {
+      const isValid = await verifyPassword(currentPassword, dbUser.password)
+      if (!isValid) {
+        return NextResponse.json(
+          { error: 'Current password is incorrect' },
+          { status: 400 }
+        )
+      }
     }
 
-    // Hash new password
     const hashedPassword = await hashPassword(newPassword)
 
-    // Update password
     await prisma.user.update({
-      where: { id: user.userId },
+      where: { id: targetUserId },
       data: { password: hashedPassword },
     })
 
@@ -56,6 +55,7 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
 
 
 
