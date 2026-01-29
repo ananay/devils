@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import { prisma } from './db'
+import crypto from 'crypto'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'devil666'
 const SESSION_SECRET = process.env.SESSION_SECRET || 'sessiondevil'
@@ -55,16 +56,34 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
-// Create session cookie
+// Create session cookie - Fixed: Added HMAC signature to prevent tampering
 export function createSession(data: SessionData): string {
-  const sessionData = Buffer.from(JSON.stringify(data)).toString('base64')
-  return sessionData
+  const sessionData = JSON.stringify(data)
+  const signature = crypto
+    .createHmac('sha256', SESSION_SECRET)
+    .update(sessionData)
+    .digest('hex')
+  
+  const signed = JSON.stringify({ data: sessionData, signature })
+  return Buffer.from(signed).toString('base64')
 }
 
-// Parse session cookie
+// Parse session cookie - Fixed: Verify HMAC signature before accepting session data
 export function parseSession(sessionCookie: string): SessionData | null {
   try {
-    const data = Buffer.from(sessionCookie, 'base64').toString('utf-8')
+    const decoded = Buffer.from(sessionCookie, 'base64').toString('utf-8')
+    const { data, signature } = JSON.parse(decoded)
+    
+    // Verify signature
+    const expectedSignature = crypto
+      .createHmac('sha256', SESSION_SECRET)
+      .update(data)
+      .digest('hex')
+    
+    if (signature !== expectedSignature) {
+      return null
+    }
+    
     return JSON.parse(data)
   } catch {
     return null
