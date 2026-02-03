@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    // Security Fix: Do not accept userId from body to prevent IDOR attacks
+    // Always use the authenticated user's ID from the session
     const { currentPassword, newPassword } = body
 
     // Get user with password
@@ -29,7 +31,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify current password
+    // Always verify current password for password changes
     const isValid = await verifyPassword(currentPassword, dbUser.password)
     if (!isValid) {
       return NextResponse.json(
@@ -56,8 +58,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-
-
-
-
