@@ -17,9 +17,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { currentPassword, newPassword } = body
 
+    // Security Fix: Remove userId parameter to prevent IDOR attacks
+    // Password changes should only be allowed for the authenticated user
+    const targetUserId = user.userId
+
     // Get user with password
     const dbUser = await prisma.user.findUnique({
-      where: { id: user.userId },
+      where: { id: targetUserId },
     })
 
     if (!dbUser) {
@@ -29,7 +33,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify current password
+    // Always verify current password before allowing changes
     const isValid = await verifyPassword(currentPassword, dbUser.password)
     if (!isValid) {
       return NextResponse.json(
@@ -43,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Update password
     await prisma.user.update({
-      where: { id: user.userId },
+      where: { id: targetUserId },
       data: { password: hashedPassword },
     })
 
@@ -56,8 +60,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-
-
-
-
