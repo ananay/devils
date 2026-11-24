@@ -16,6 +16,7 @@ export default function UsersManagement() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetchUsers()
@@ -25,8 +26,10 @@ export default function UsersManagement() {
     try {
       const response = await fetch('/api/internal/users')
       const data = await response.json()
+      if (!response.ok) { setError(data.error || 'Unable to load users'); return }
       setUsers(data.users)
     } catch (error) {
+      setError('Unable to load users')
       console.error('Failed to fetch users:', error)
     } finally {
       setLoading(false)
@@ -37,7 +40,8 @@ export default function UsersManagement() {
     if (!confirm('Are you sure you want to delete this user?')) return
 
     try {
-      await fetch(`/api/users/${id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/users/${id}`, { method: 'DELETE' })
+      if (!response.ok) { setError('Unable to delete user'); return }
       setUsers(users.filter(u => u.id !== id))
     } catch (error) {
       console.error('Failed to delete user:', error)
@@ -46,11 +50,12 @@ export default function UsersManagement() {
 
   const handleRoleChange = async (id: number, newRole: string) => {
     try {
-      await fetch(`/api/users/${id}`, {
+      const response = await fetch(`/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
       })
+      if (!response.ok) { setError('Unable to update role'); return }
       setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u))
     } catch (error) {
       console.error('Failed to update role:', error)
@@ -81,6 +86,8 @@ export default function UsersManagement() {
             <h1 className="font-serif text-4xl font-bold text-white">User Management</h1>
           </div>
         </div>
+
+        {error && <p role="alert" className="mb-4 text-red-400">{error}</p>}
 
         {/* Search */}
         <div className="mb-6">

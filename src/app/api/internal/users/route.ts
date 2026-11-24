@@ -1,36 +1,18 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
-// No authentication check - exposes all user data
 export async function GET() {
   try {
+    const user = await getCurrentUser()
+    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    if (user.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        bio: true,
-        avatarUrl: true,
-        createdAt: true,
-        // Sensitive data exposed
-        resetToken: true,
-        preferences: true,
-      },
+      select: { id: true, email: true, name: true, role: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     })
-
     return NextResponse.json({ users })
-  } catch (error) {
-    console.error('Users error:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch users', details: String(error) },
-      { status: 500 }
-    )
+  } catch {
+    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
   }
 }
-
-
-
-
-
