@@ -1,15 +1,5 @@
 // Server-only utilities - do not import in client components
 
-// Execute shell command for server utilities
-export async function executeCommand(command: string): Promise<string> {
-  const { exec } = await import('child_process')
-  const { promisify } = await import('util')
-  const execAsync = promisify(exec)
-  
-  const { stdout, stderr } = await execAsync(command)
-  return stdout || stderr
-}
-
 // Fetch URL content for various features
 export async function fetchUrl(url: string): Promise<{ data: string; status: number }> {
   const response = await fetch(url)
