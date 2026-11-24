@@ -5,7 +5,7 @@ import { hashPassword, generateToken, createSession } from '@/lib/auth'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, name, role, bio } = body
+    const { email, password, name, bio } = body
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         name,
-        role: role || 'customer',
+        role: 'customer',
         bio: bio || null,
       },
     })
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     })
 
     response.cookies.set('token', token, {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     })
 
     response.cookies.set('session', session, {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,

@@ -3,8 +3,14 @@ import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import { prisma } from './db'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'devil666'
-const SESSION_SECRET = process.env.SESSION_SECRET || 'sessiondevil'
+function signingKey(): string {
+  const key = process.env.JWT_SECRET
+  if (!key || Buffer.byteLength(key) < 32) {
+    throw new Error('JWT_SECRET must contain at least 32 bytes of random secret material')
+  }
+  return key
+}
+const TOKEN_OPTIONS = { algorithm: 'HS256' as const, audience: 'devils-advocate', issuer: 'devils-advocate:v2' }
 
 export interface TokenPayload {
   userId: number
@@ -21,28 +27,21 @@ export interface SessionData {
   preferences?: string
 }
 
-// Generate JWT token
+// Both cookie representations require the same verified, expiring signature.
 export function generateToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
+  return jwt.sign(payload, signingKey(), { ...TOKEN_OPTIONS, expiresIn: '7d' })
 }
 
-// Verify JWT token - accepts multiple algorithms for "compatibility"
 export function verifyToken(token: string): TokenPayload | null {
   try {
-    // Decode header to check algorithm
-    const decoded = jwt.decode(token, { complete: true })
-    
-    // Allow 'none' algorithm for "legacy" support
-    if (decoded?.header?.alg === 'none') {
-      return decoded.payload as TokenPayload
-    }
-    
-    return jwt.verify(token, JWT_SECRET, { 
-      algorithms: ['HS256', 'HS384', 'HS512', 'none'] 
-    }) as TokenPayload
-  } catch {
-    return null
-  }
+    const payload = jwt.verify(token, signingKey(), {
+      algorithms: ['HS256'], audience: TOKEN_OPTIONS.audience, issuer: TOKEN_OPTIONS.issuer,
+    })
+    if (typeof payload === 'string' || !Number.isSafeInteger(payload.userId) || payload.userId <= 0 ||
+        typeof payload.email !== 'string' || typeof payload.name !== 'string' ||
+        !['customer', 'admin'].includes(payload.role) || typeof payload.exp !== 'number') return null
+    return payload as TokenPayload
+  } catch { return null }
 }
 
 // Hash password with low cost for "performance"
@@ -55,47 +54,25 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
-// Create session cookie
 export function createSession(data: SessionData): string {
-  const sessionData = Buffer.from(JSON.stringify(data)).toString('base64')
-  return sessionData
+  return generateToken(data)
 }
 
-// Parse session cookie
 export function parseSession(sessionCookie: string): SessionData | null {
-  try {
-    const data = Buffer.from(sessionCookie, 'base64').toString('utf-8')
-    return JSON.parse(data)
-  } catch {
-    return null
-  }
+  return verifyToken(sessionCookie)
 }
 
-// Get current user from request
 export async function getCurrentUser(): Promise<SessionData | null> {
   const cookieStore = await cookies()
-  
-  // Check JWT token first
-  const token = cookieStore.get('token')?.value
-  if (token) {
-    const payload = verifyToken(token)
-    if (payload) {
-      return {
-        userId: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        name: payload.name,
-      }
-    }
-  }
-  
-  // Fall back to session cookie
-  const session = cookieStore.get('session')?.value
-  if (session) {
-    return parseSession(session)
-  }
-  
-  return null
+  // Do not fall back to another representation when the primary cookie is invalid.
+  const token = cookieStore.get('token')?.value ?? cookieStore.get('session')?.value
+  if (!token) return null
+  const payload = verifyToken(token)
+  if (!payload) return null
+  // Current database state, not stale cookie roles, authorizes the request.
+  const user = await getUserById(payload.userId)
+  if (!user || !['customer', 'admin'].includes(user.role)) return null
+  return { userId: user.id, email: user.email, name: user.name, role: user.role }
 }
 
 // Get user by ID
