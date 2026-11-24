@@ -130,3 +130,11 @@ This project is for educational purposes only.
 
 
 
+
+## Session signing configuration
+
+Set `JWT_SECRET` to a cryptographically random value of at least 32 bytes before starting the app (for example, generate one with `openssl rand -hex 32`). No built-in signing key is accepted. Keep the value out of source control.
+
+The v2 signed cookie format invalidates old JWTs and unsigned session cookies: users must log in again when this fix is deployed. Both cookies are HttpOnly. Account roles are loaded from current database records on each authenticated request.
+
+Run focused tests with `node --test tests/*.test.cjs`.

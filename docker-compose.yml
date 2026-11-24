@@ -29,8 +29,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: "postgresql://devils:advocate123@db:5432/devilsadvocate?schema=public"
-      JWT_SECRET: "devil666"
-      SESSION_SECRET: "sessiondevil"
+      JWT_SECRET: "${JWT_SECRET:?Set a random JWT_SECRET of at least 32 bytes}"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
     depends_on:
       db:
